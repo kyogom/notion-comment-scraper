@@ -38,16 +38,6 @@ async function getPagesIncludingComments(): Promise<Pages> {
   return pages;
 }
 
-// async function appendBlocks(pages: Pages) {
-//   for (const post of pages) {
-//     await notion.blocks.children.append({
-//       block_id: post.pageId,
-//       ...post.convertToNotionBlock(),
-//     });
-//     await sleep(1000 / NOTION_API_LIMIT_PER_SEC);
-//   }
-// }
-
 async function main() {
   if (
     !process.env.NOTION_TOKEN ||
