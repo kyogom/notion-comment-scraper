@@ -15,7 +15,7 @@ interface RichText {
     color: string;
   };
 }
-interface Comment {
+export interface ResponseCommentListResult {
   object: string;
   id: string;
   parent: {
@@ -32,9 +32,9 @@ interface Comment {
   rich_text: RichText[];
 }
 
-export interface ResponseComment {
+export interface ResponseCommentList {
   object: string;
-  results: Comment[];
+  results: ResponseCommentListResult[];
   next_cursor: string | null;
   has_more: boolean;
 }
