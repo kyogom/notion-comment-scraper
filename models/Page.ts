@@ -1,6 +1,7 @@
-import { NOTION_API_LIMIT_PER_SEC } from "..";
+import { NOTION_API_LIMIT_PER_SEC, WRITING_WAIT_MS } from "..";
+import { NotionClient } from "../client";
 import { sleep } from "../util";
-import { Comments, Comment } from "./Comments";
+import { Comments } from "./Comments";
 import {
   ResponseDatabaseQuery,
   ResponseDatabaseQueryResult,
@@ -34,38 +35,39 @@ export class Pages {
       return a.created_time < b.created_time ? -1 : 1;
     });
   }
-  async appendBlocks(client: any, NOTION_COMMENT_SUMMARY_PAGE_ID: string) {
-    let pageCountCompleted = 0;
-    for (const page of this.pages) {
-      if (page.isSubItem || page.comments.length === 0) {
+
+  async fetchComments() {
+    let i = 0;
+    for await (const page of this.pages) {
+      console.log(`fetching comments ... ${++i}/${this.pages.length}`);
+      if (page.isSubItem) continue;
+      page.comments = await Page.fetchComments(page.id);
+
+      for await (const subPage of page.subPages) {
+        subPage.comments = await Page.fetchComments(subPage.id);
+      }
+    }
+  }
+
+  async appendBlocks(NOTION_COMMENT_SUMMARY_PAGE_ID: string) {
+    let i = 0;
+    for await (const page of this.pages) {
+      console.log(`writing comments ... ${++i}/${this.pages.length}`);
+      if (page.isSubItem || page.comments.comments.length === 0) {
         continue;
       }
-      page.appendHeading(client, NOTION_COMMENT_SUMMARY_PAGE_ID);
-      await sleep(1000 / NOTION_API_LIMIT_PER_SEC);
-      for (const comment of page.comments) {
-        console.log(
-          "writing comments ...",
-          `${++pageCountCompleted} / ${this.pages.length}`
-        );
-        await comment.appendComment(client, NOTION_COMMENT_SUMMARY_PAGE_ID);
-        await sleep(1000 / NOTION_API_LIMIT_PER_SEC);
-      }
-      for (const subPage of page.subPages) {
-        for (const comment of subPage.comments) {
-          console.log(
-            "writing comments ...",
-            `${++pageCountCompleted} / ${this.pages.length}`
-          );
-          await comment.appendComment(client, NOTION_COMMENT_SUMMARY_PAGE_ID);
-          await sleep(1000 / NOTION_API_LIMIT_PER_SEC);
-        }
+      await page.appendHeading(NOTION_COMMENT_SUMMARY_PAGE_ID);
+
+      await page.comments.appendComments(NOTION_COMMENT_SUMMARY_PAGE_ID);
+      for await (const subPage of page.subPages) {
+        await subPage.comments.appendComments(NOTION_COMMENT_SUMMARY_PAGE_ID);
       }
     }
   }
 }
 
 export class Page {
-  comments: Comment[];
+  comments: Comments;
   created_time: string;
   emoji: string;
   id: string;
@@ -87,7 +89,7 @@ export class Page {
     isSubItem = false,
     subPages: Page[] = []
   ) {
-    this.comments = [];
+    this.comments = new Comments([]);
     this.created_time = created_time;
     this.emoji = emoji;
     this.id = id;
@@ -99,11 +101,10 @@ export class Page {
     this.subPages = subPages;
   }
 
-  static async fetchComments(client: any, pageId: string): Promise<Comment[]> {
-    const responseCommentList = (await client.comments.list({
-      block_id: pageId,
-    })) as ResponseCommentList;
-    await sleep(1000 / NOTION_API_LIMIT_PER_SEC);
+  static async fetchComments(pageId: string): Promise<Comments> {
+    const client = new NotionClient();
+    const responseCommentList = await client.listComments(pageId);
+
     if (responseCommentList.has_more) {
       throw new Error("This script does not support paginated responses");
     }
@@ -125,8 +126,9 @@ export class Page {
     );
   }
 
-  async appendHeading(client: any, NOTION_COMMENT_SUMMARY_PAGE_ID: string) {
-    await client.blocks.children.append({
+  async appendHeading(NOTION_COMMENT_SUMMARY_PAGE_ID: string) {
+    const client = new NotionClient();
+    await client.appendBlocks({
       block_id: NOTION_COMMENT_SUMMARY_PAGE_ID,
       children: [
         {
@@ -147,12 +149,6 @@ export class Page {
           },
         },
       ],
-    });
-  }
-
-  sortCommentsByCreatedAt(): void {
-    this.comments = this.comments.sort((a, b) => {
-      return a.created_time < b.created_time ? -1 : 1;
     });
   }
 }

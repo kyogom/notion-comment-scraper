@@ -1,40 +1,15 @@
 require("dotenv").config();
 const { Client } = require("@notionhq/client");
-import {
-  ParamsDatabaseQuery,
-  ResponseDatabaseQuery,
-} from "./types/DatabaseQuery";
-import { Page, Pages } from "./types/Page";
+import { NotionClient } from "./client";
+import { ParamsDatabaseQuery } from "./models/DatabaseQuery";
+import { Pages } from "./models/Page";
 
 export const NOTION_API_LIMIT_PER_SEC = 3;
+export const WRITING_WAIT_MS = 0; // 書き込みを待たずに連続すると409が返ってくる
+
 const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
-
-async function getPagesIncludingComments(): Promise<Pages> {
-  const query: ParamsDatabaseQuery = {
-    database_id: process.env.NOTION_DATABASE_ID!,
-  };
-  let response = (await notion.databases.query(query)) as ResponseDatabaseQuery;
-
-  if (response.has_more) {
-    throw new Error("This script does not support paginated responses");
-  }
-
-  const pages = new Pages(Pages.fromResponseDatabaseQuery(response));
-  let i = 0;
-  for (const page of pages.pages) {
-    if (page.isSubItem) continue;
-    console.log(`fetching comments ... ${++i} / ${pages.pages.length}`);
-    page.comments = await Page.fetchComments(notion, page.id);
-
-    for (const subPage of page.subPages) {
-      console.log(`fetching comments ... ${++i} / ${pages.pages.length}`);
-      subPage.comments = await Page.fetchComments(notion, subPage.id);
-    }
-  }
-  return pages;
-}
 
 async function main() {
   if (
@@ -44,7 +19,20 @@ async function main() {
   ) {
     throw new Error("You need to set .env");
   }
-  const pages = await getPagesIncludingComments();
-  await pages.appendBlocks(notion, process.env.NOTION_COMMENT_SUMMARY_PAGE_ID);
+  const query: ParamsDatabaseQuery = {
+    database_id: process.env.NOTION_DATABASE_ID!,
+  };
+  const client = new NotionClient();
+  const response = await client.queryDatabase(query);
+  if (response.has_more) {
+    // TODO: ページングは未実装
+    throw new Error(
+      "pages > 100. This script does not support pagination yet."
+    );
+  }
+  const pages = new Pages(Pages.fromResponseDatabaseQuery(response));
+
+  await pages.fetchComments();
+  await pages.appendBlocks(process.env.NOTION_COMMENT_SUMMARY_PAGE_ID);
 }
 main();

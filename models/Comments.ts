@@ -1,17 +1,28 @@
+import { NOTION_API_LIMIT_PER_SEC, WRITING_WAIT_MS } from "..";
+import { NotionClient } from "../client";
+import { sleep } from "../util";
 import {
   ResponseCommentList,
   ResponseCommentListResult,
 } from "./ResponseCommentList";
 
 export class Comments {
+  async appendComments(pageId: string) {
+    for await (const comment of this.comments) {
+      sleep(1000 / NOTION_API_LIMIT_PER_SEC);
+      await comment.appendComment(pageId);
+    }
+  }
   comments: Comment[];
   constructor(comments: Comment[]) {
     this.comments = comments;
   }
-  static fromResponseCommentList(response: ResponseCommentList): Comment[] {
-    return response.results.map((result) => {
-      return Comment.fromResponseCommentListResult(result);
-    });
+  static fromResponseCommentList(response: ResponseCommentList): Comments {
+    return new Comments(
+      response.results.map((result) => {
+        return Comment.fromResponseCommentListResult(result);
+      })
+    );
   }
 }
 
@@ -32,8 +43,9 @@ export class Comment {
     return new Comment(result.created_time, result.id, result.parent.page_id);
   }
 
-  async appendComment(client: any, pageId: string) {
-    await client.blocks.children.append({
+  async appendComment(pageId: string) {
+    const client = new NotionClient();
+    await client.appendBlocks({
       block_id: pageId,
       children: [
         {
