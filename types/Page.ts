@@ -1,4 +1,4 @@
-import { NOTION_API_LIMIT_PER_SEC, WRITING_WAIT } from "..";
+import { NOTION_API_LIMIT_PER_SEC } from "..";
 import { sleep } from "../util";
 import { Comments, Comment } from "./Comments";
 import {
@@ -62,14 +62,14 @@ export class Pages {
           },
         ],
       });
-      await sleep(1000 / NOTION_API_LIMIT_PER_SEC + WRITING_WAIT);
+      await sleep(1000 / NOTION_API_LIMIT_PER_SEC);
       for (const comment of page.comments) {
         console.log(
           "writing comments ...",
           `${++pageCountCompleted} / ${this.pages.length}`
         );
         await comment.appendComment(client, NOTION_COMMENT_SUMMARY_PAGE_ID);
-        await sleep(1000 / NOTION_API_LIMIT_PER_SEC + WRITING_WAIT);
+        await sleep(1000 / NOTION_API_LIMIT_PER_SEC);
       }
       for (const subPage of page.subPages) {
         for (const comment of subPage.comments) {
@@ -78,7 +78,7 @@ export class Pages {
             `${++pageCountCompleted} / ${this.pages.length}`
           );
           await comment.appendComment(client, NOTION_COMMENT_SUMMARY_PAGE_ID);
-          await sleep(1000 / NOTION_API_LIMIT_PER_SEC + WRITING_WAIT);
+          await sleep(1000 / NOTION_API_LIMIT_PER_SEC);
         }
       }
     }

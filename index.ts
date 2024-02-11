@@ -8,7 +8,6 @@ import { sleep } from "./util";
 import { Page, Pages } from "./types/Page";
 
 export const NOTION_API_LIMIT_PER_SEC = 3;
-export const WRITING_WAIT = 1000; // 書き込み処理を連続で行うとNotionが処理できずにエラーが出るようなので、少し待つ
 const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
