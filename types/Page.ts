@@ -115,7 +115,6 @@ export class Page {
       result.created_time,
       result.icon?.emoji ?? "",
       result.id,
-      // @ts-ignore-next-line
       result.properties[process.env.NOTION_DATABASE_PROPERTY_NAME_COLUMN!]
         ?.title[0]?.text?.content ?? "",
       result.url,
