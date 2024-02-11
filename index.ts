@@ -4,7 +4,6 @@ import {
   ParamsDatabaseQuery,
   ResponseDatabaseQuery,
 } from "./types/DatabaseQuery";
-import { sleep } from "./util";
 import { Page, Pages } from "./types/Page";
 
 export const NOTION_API_LIMIT_PER_SEC = 3;
@@ -46,6 +45,6 @@ async function main() {
     throw new Error("You need to set .env");
   }
   const pages = await getPagesIncludingComments();
-  pages.appendBlocks(notion, process.env.NOTION_COMMENT_SUMMARY_PAGE_ID);
+  await pages.appendBlocks(notion, process.env.NOTION_COMMENT_SUMMARY_PAGE_ID);
 }
 main();

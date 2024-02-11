@@ -40,28 +40,7 @@ export class Pages {
       if (page.isSubItem || page.comments.length === 0) {
         continue;
       }
-      await client.blocks.children.append({
-        block_id: NOTION_COMMENT_SUMMARY_PAGE_ID,
-        children: [
-          {
-            object: "block",
-            type: "heading_3",
-            heading_3: {
-              rich_text: [
-                {
-                  type: "text",
-                  text: {
-                    content: `${page.emoji === "" ? "" : `${page.emoji} `}${
-                      page.title
-                    }`,
-                    link: { url: page.url },
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      });
+      page.appendHeading(client, NOTION_COMMENT_SUMMARY_PAGE_ID);
       await sleep(1000 / NOTION_API_LIMIT_PER_SEC);
       for (const comment of page.comments) {
         console.log(
@@ -145,6 +124,31 @@ export class Page {
         process.env.NOTION_DATABASE_SUB_ITEM_COLUMN!
       ]?.relation.map((r: any) => r.id) ?? []
     );
+  }
+
+  async appendHeading(client: any, NOTION_COMMENT_SUMMARY_PAGE_ID: string) {
+    await client.blocks.children.append({
+      block_id: NOTION_COMMENT_SUMMARY_PAGE_ID,
+      children: [
+        {
+          object: "block",
+          type: "heading_3",
+          heading_3: {
+            rich_text: [
+              {
+                type: "text",
+                text: {
+                  content: `${this.emoji === "" ? "" : `${this.emoji} `}${
+                    this.title
+                  }`,
+                  link: { url: this.url },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
   }
 
   sortCommentsByCreatedAt(): void {
