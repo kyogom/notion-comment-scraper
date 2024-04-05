@@ -5,7 +5,6 @@ import { ParamsDatabaseQuery } from "./models/DatabaseQuery";
 import { Pages } from "./models/Page";
 
 export const NOTION_API_LIMIT_PER_SEC = 3;
-export const WRITING_WAIT_MS = 0; // 書き込みを待たずに連続すると409が返ってくる
 
 const notion = new Client({
   auth: process.env.NOTION_TOKEN,

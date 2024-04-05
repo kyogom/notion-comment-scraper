@@ -1,12 +1,9 @@
-import { NOTION_API_LIMIT_PER_SEC, WRITING_WAIT_MS } from "..";
 import { NotionClient } from "../client";
-import { sleep } from "../util";
 import { Comments } from "./Comments";
 import {
   ResponseDatabaseQuery,
   ResponseDatabaseQueryResult,
 } from "./DatabaseQuery";
-import { ResponseCommentList } from "./ResponseCommentList";
 
 export class Pages {
   pages: Page[];

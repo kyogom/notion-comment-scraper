@@ -1,4 +1,4 @@
-import { NOTION_API_LIMIT_PER_SEC, WRITING_WAIT_MS } from ".";
+import { NOTION_API_LIMIT_PER_SEC } from ".";
 import {
   ParamsDatabaseQuery,
   ResponseDatabaseQuery,
