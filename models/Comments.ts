@@ -1,6 +1,4 @@
-import { NOTION_API_LIMIT_PER_SEC } from "..";
 import { NotionClient } from "../client";
-import { sleep } from "../util";
 import {
   ResponseCommentList,
   ResponseCommentListResult,
@@ -9,7 +7,6 @@ import {
 export class Comments {
   async appendComments(pageId: string) {
     for await (const comment of this.comments) {
-      sleep(1000 / NOTION_API_LIMIT_PER_SEC);
       await comment.appendComment(pageId);
     }
   }
